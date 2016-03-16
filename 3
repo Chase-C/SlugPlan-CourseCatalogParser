@@ -1,0 +1,27 @@
+module UCSCScraper
+    ( parsePDF
+    ) where
+
+import System.IO
+import Pdf.Toolbox.Document
+import Data.Text
+
+parsePDF :: FilePath -> IO ()
+parsePDF filename =
+    withBinaryFile filename ReadMode $ \handle -> do
+        runPdfWithHandle handle knownFilters $ do
+            pdf <- document
+            catalog <- documentCatalog pdf
+            rootNode <- catalogPageNode catalog
+            kids <- pageNodeKids rootNode
+            map printKid kids
+        return ()
+
+printKid kid =
+    case loadPageNode kid of
+        (PageTreeNode node) -> do
+            kids <- pageNodeKids rootNode
+            map printKid kids
+        (PageTreeLeaf leaf) -> do
+            text <- pageExtractText leaf
+            liftIO $ print $ show text
